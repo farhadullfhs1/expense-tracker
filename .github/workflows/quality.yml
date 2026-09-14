@@ -15,7 +15,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: docker build --tag expense-tracker:${{ github.sha }} .
-      - uses: aquasecurity/trivy-action@0.33.1
+      - uses: aquasecurity/trivy-actionv@0.33.1
         with:
           image-ref: expense-tracker:${{ github.sha }}
           format: table
