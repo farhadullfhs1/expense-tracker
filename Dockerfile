@@ -15,6 +15,8 @@ RUN pnpm exec expo export --platform web
 
 FROM nginx:1.27-alpine
 
+RUN apk update && apk upgrade
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/dist /usr/share/nginx/html
