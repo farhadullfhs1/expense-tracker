@@ -1,26 +1,61 @@
 name: Deploy infrastructure
+
 on:
-  push: { branches: [main] }
-permissions: { contents: read, id-token: write }
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
-  apply:
+  deploy:
     environment: prod
     runs-on: ubuntu-latest
-    env:
-      TF_VAR_environment: prod
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ap-northeast-2
-      - run: terraform -chdir=infra/terraform init
-      - run: terraform -chdir=infra/terraform apply -auto-approve -target=aws_ecr_repository.app -var="image_tag=${{ github.sha }}" -var="vpc_id=${{ secrets.AWS_VPC_ID }}" -var='public_subnet_ids=${{ secrets.AWS_PUBLIC_SUBNET_IDS }}'
-      - id: ecr
+
+      - name: Initialize Terraform
+        run: terraform -chdir=infra/terraform init
+
+      - name: Create ECR repository
+        run: |
+          terraform -chdir=infra/terraform apply \
+            -auto-approve \
+            -target=aws_ecr_repository.app \
+            -var="image_tag=${{ github.sha }}" \
+            -var="vpc_id=${{ secrets.AWS_VPC_ID }}" \
+            -var='public_subnet_ids=${{ secrets.AWS_PUBLIC_SUBNET_IDS }}'
+
+      - name: Login to Amazon ECR
+        id: ecr
         uses: aws-actions/amazon-ecr-login@v2
-      - run: docker build --tag "$REGISTRY/$REPOSITORY:${{ github.sha }}" . && docker push "$REGISTRY/$REPOSITORY:${{ github.sha }}"
+
+      - name: Build and push Docker image
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
           REPOSITORY: expense-tracker-prod
-      - run: terraform -chdir=infra/terraform apply -auto-approve -var="image_tag=${{ github.sha }}" -var="vpc_id=${{ secrets.AWS_VPC_ID }}" -var='public_subnet_ids=${{ secrets.AWS_PUBLIC_SUBNET_IDS }}'
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$REGISTRY/$REPOSITORY:$IMAGE_TAG" .
+          docker push "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+
+      - name: Deploy application infrastructure
+        run: |
+          terraform -chdir=infra/terraform apply \
+            -auto-approve \
+            -var="image_tag=${{ github.sha }}" \
+            -var="vpc_id=${{ secrets.AWS_VPC_ID }}" \
+            -var='public_subnet_ids=${{ secrets.AWS_PUBLIC_SUBNET_IDS }}'
