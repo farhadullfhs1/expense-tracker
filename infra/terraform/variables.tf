@@ -1,6 +1,6 @@
 variable "aws_region" {
   type    = string
-  default = "ap-south-1"
+  default = "ap-northeast-2"
 }
 
 variable "project" {
@@ -10,7 +10,7 @@ variable "project" {
 
 variable "environment" {
   type    = string
-  default = "dev"
+  default = "prod"
 }
 
 variable "image_tag" {

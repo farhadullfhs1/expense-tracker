@@ -14,7 +14,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ap-south-1
+          aws-region: ap-northeast-2
       - run: terraform -chdir=infra/terraform init
       - run: terraform -chdir=infra/terraform apply -auto-approve -target=aws_ecr_repository.app -var="image_tag=${{ github.sha }}" -var="vpc_id=${{ secrets.AWS_VPC_ID }}" -var='public_subnet_ids=${{ secrets.AWS_PUBLIC_SUBNET_IDS }}'
       - id: ecr
