@@ -43,7 +43,25 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Check if image already exists
+        id: image
+        env:
+          REPOSITORY: expense-tracker-prod
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          if aws ecr describe-images \
+            --repository-name "$REPOSITORY" \
+            --image-ids imageTag="$IMAGE_TAG" \
+            --region ap-northeast-2 > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Image $IMAGE_TAG already exists in ECR. Skipping push."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Image $IMAGE_TAG does not exist. It will be built and pushed."
+          fi
+
       - name: Build and push Docker image
+        if: steps.image.outputs.exists != 'true'
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
           REPOSITORY: expense-tracker-prod
