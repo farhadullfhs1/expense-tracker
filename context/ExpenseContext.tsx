@@ -1,4 +1,4 @@
-import * as SQLite from 'expo-sqlite';
+﻿import * as SQLite from 'expo-sqlite';
 import React, {
   createContext,
   useContext,
@@ -80,7 +80,7 @@ export function parseDayKey(value: string): Date {
 }
 
 export function formatCurrencyFromPaise(value: number): string {
-  return `₹${(value / 100).toLocaleString('en-IN', {
+  return `\u20B9${(value / 100).toLocaleString('en-IN', {
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
   })}`;
@@ -147,7 +147,7 @@ export function ExpenseProvider({
       // IMPORTANT:
       // Use the async SQLite initialization path for web.
       const database = await SQLite.openDatabaseAsync(
-        'expense-tracker.db',
+        'expense-tracker-v2.db',
       );
 
       if (!active) {

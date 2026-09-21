@@ -45,3 +45,10 @@ yarn-error.*
 
 # Terraform
 .terraform/
+
+# Local Terraform state
+*.tfstate
+*.tfstate.*
+
+# Local backup files
+*.backup
